@@ -312,6 +312,7 @@ impl Schedule {
     }
 }
 
+
 impl FromStr for Schedule {
     type Err = Error;
     fn from_str(expression: &str) -> Result<Self, Self::Err> {
@@ -538,7 +539,7 @@ named!(
 );
 
 named!(
-    shorthand_hourly<Input, Schedule>,
+    pub shorthand_hourly<Input, Schedule>,
     do_parse!(
         tag!("@hourly")
             >> (Schedule::from(

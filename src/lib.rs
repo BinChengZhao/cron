@@ -43,8 +43,11 @@ extern crate nom;
 extern crate error_chain;
 
 pub mod error;
-mod schedule;
-mod time_unit;
+pub mod schedule;
+pub mod time_unit;
+pub use chrono::*;
+pub use nom::*;
+pub use error_chain::*;
 
 pub use schedule::Schedule;
 pub use time_unit::TimeUnitSpec;
