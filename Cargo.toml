@@ -1,11 +1,11 @@
 [package]
-name = "cron"
-version = "0.6.0"
-authors = ["Zack Slayton <zack.slayton@gmail.com>"]
-repository = "https://github.com/zslayton/cron"
+name = "cron_clock"
+version = "0.6.1"
+authors = ["binchengZhao <binchengZhao@outlook.com>"]
+repository = "https://github.com/BinChengZhao/cron"
 documentation = "https://docs.rs/cron"
 readme = "README.md"
-description = "A cron expression parser and schedule explorer."
+description = "A cron expression parser and schedule explorer. I forked by zslayton.Please correct me if there is anything wrong."
 keywords = [ "cron", "schedule", "repeat", "periodic", "time" ]
 license = "MIT"
 
