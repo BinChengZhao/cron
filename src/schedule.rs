@@ -312,7 +312,6 @@ impl Schedule {
     }
 }
 
-
 impl FromStr for Schedule {
     type Err = Error;
     fn from_str(expression: &str) -> Result<Self, Self::Err> {
@@ -331,6 +330,7 @@ where
     schedule: &'a Schedule,
     previous_datetime: DateTime<Z>,
 }
+
 //TODO: Cutoff datetime?
 
 impl<'a, Z> ScheduleIterator<'a, Z>
@@ -347,6 +347,49 @@ where
 }
 
 impl<'a, Z> Iterator for ScheduleIterator<'a, Z>
+where
+    Z: TimeZone,
+{
+    type Item = DateTime<Z>;
+
+    fn next(&mut self) -> Option<DateTime<Z>> {
+        if self.is_done {
+            return None;
+        }
+        if let Some(next_datetime) = self.schedule.next_after(&self.previous_datetime) {
+            self.previous_datetime = next_datetime.clone();
+            Some(next_datetime)
+        } else {
+            self.is_done = true;
+            None
+        }
+    }
+}
+
+//TODO: NEW Owned Version.
+pub struct ScheduleIteratorOwned<Z>
+where
+    Z: TimeZone,
+{
+    is_done: bool,
+    schedule: Schedule,
+    previous_datetime: DateTime<Z>,
+}
+
+impl<Z> ScheduleIteratorOwned<Z>
+where
+    Z: TimeZone,
+{
+    fn new(schedule: Schedule, starting_datetime: &DateTime<Z>) -> ScheduleIteratorOwned<Z> {
+        ScheduleIteratorOwned {
+            is_done: false,
+            schedule: schedule,
+            previous_datetime: starting_datetime.clone(),
+        }
+    }
+}
+
+impl<Z> Iterator for ScheduleIteratorOwned<Z>
 where
     Z: TimeZone,
 {
