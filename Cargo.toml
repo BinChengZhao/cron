@@ -1,8 +1,8 @@
 [package]
 name = "cron_clock"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["binchengZhao <binchengZhao@outlook.com>"]
-repository = "https://github.com/BinChengZhao/cron"
+repository = "https://github.com/BinChengZhao/cron_clock"
 documentation = "https://docs.rs/cron"
 readme = "README.md"
 description = "A cron expression parser and schedule explorer. Develop based on zslayton/cron."
