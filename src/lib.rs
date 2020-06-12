@@ -49,5 +49,4 @@ pub use chrono::*;
 pub use error_chain::*;
 pub use nom::*;
 
-pub use schedule::Schedule;
 pub use time_unit::TimeUnitSpec;

@@ -1,10 +1,13 @@
 extern crate chrono;
-extern crate cron;
+extern crate cron_clock;
 
 #[cfg(test)]
 mod tests {
     use chrono::*;
-    use cron::{Schedule, TimeUnitSpec};
+    use cron_clock::{
+        schedule::{Schedule, ScheduleIterator, ScheduleIteratorOwned},
+        TimeUnitSpec,
+    };
     use std::collections::Bound::{Excluded, Included};
     use std::str::FromStr;
 
@@ -14,6 +17,17 @@ mod tests {
         let schedule = Schedule::from_str(expression).unwrap();
         println!("README: Upcoming fire times for '{}':", expression);
         for datetime in schedule.upcoming(Utc).take(10) {
+            println!("README: -> {}", datetime);
+        }
+    }
+
+    #[test]
+    fn test_schedule_iterator_owned() {
+        let expression = "0/5 * * * * *";
+        let schedule = Schedule::from_str(expression).unwrap();
+        let schedule_iterator = schedule.upcoming_owned(Utc).take(10);
+        println!("README: Upcoming fire times for '{}':", expression);
+        for datetime in schedule_iterator {
             println!("README: -> {}", datetime);
         }
     }
@@ -168,6 +182,60 @@ mod tests {
         );
         assert_eq!(
             Utc.ymd(2017, 2, 26).and_hms(1, 0, 0),
+            events.next().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_minutely() {
+        let expression = "@minutely";
+        let schedule = Schedule::from_str(expression).expect("Failed to parse @minutely.");
+        let starting_date = Utc.ymd(2017, 2, 25).and_hms(23, 59, 36);
+        let mut events = schedule.after(&starting_date);
+
+        // for date in events.take(10) {
+        //     println!("{}", date);
+        // }
+        //TODO:NOT SUCCESS, SHOULD FIXME:.
+        assert_eq!(
+            Utc.ymd(2017, 2, 26).and_hms(00, 00, 36),
+            events.next().unwrap()
+        );
+        assert_eq!(
+            Utc.ymd(2017, 2, 26).and_hms(0, 1, 36),
+            events.next().unwrap()
+        );
+        assert_eq!(
+            Utc.ymd(2017, 2, 26).and_hms(0, 2, 36),
+            events.next().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_secondly() {
+        let expression = "@secondly";
+        let schedule = Schedule::from_str(expression).expect("Failed to parse @secondly.");
+        let starting_date = Utc.ymd(2017, 2, 28).and_hms(23, 59, 59);
+        let mut events = schedule.after(&starting_date);
+        assert_eq!(
+            Utc.ymd(2017, 3, 01).and_hms(0, 0, 00),
+            events.next().unwrap()
+        );
+        assert_eq!(
+            Utc.ymd(2017, 3, 01).and_hms(00, 00, 01),
+            events.next().unwrap()
+        );
+        assert_eq!(
+            Utc.ymd(2017, 3, 01).and_hms(0, 0, 02),
+            events.next().unwrap()
+        );
+
+        let expression = "@secondly";
+        let schedule = Schedule::from_str(expression).expect("Failed to parse @secondly.");
+        let starting_date = Utc.ymd(2017, 12, 31).and_hms(23, 59, 59);
+        let mut events = schedule.after(&starting_date);
+        assert_eq!(
+            Utc.ymd(2018, 1, 01).and_hms(0, 0, 00),
             events.next().unwrap()
         );
     }

@@ -269,6 +269,23 @@ impl Schedule {
         ScheduleIterator::new(self, after)
     }
 
+    /// Provides an iterator which will return each DateTime that matches the schedule starting with
+    /// the current time if applicable.
+    pub fn upcoming_owned<Z>(self, timezone: Z) -> ScheduleIteratorOwned<Z>
+    where
+        Z: TimeZone,
+    {
+        self.to_schedule_iterator(&timezone.from_utc_datetime(&Utc::now().naive_utc()))
+    }
+
+    /// Like the `upcoming` method, but allows you to specify a start time other than the present.
+    pub fn to_schedule_iterator<Z>(self, after: &DateTime<Z>) -> ScheduleIteratorOwned<Z>
+    where
+        Z: TimeZone,
+    {
+        ScheduleIteratorOwned::new(self, after)
+    }
+
     /// Returns a [TimeUnitSpec](trait.TimeUnitSpec.html) describing the years included
     /// in this [Schedule](struct.Schedule.html).
     pub fn years(&self) -> &impl TimeUnitSpec {
@@ -597,6 +614,40 @@ named!(
     )
 );
 
+
+named!(
+    pub shorthand_minutely<Input, Schedule>,
+    do_parse!(
+        tag!("@minutely")
+            >> (Schedule::from(
+                Seconds::from_ordinal_set(iter::once(0).collect()),
+                Minutes::all(),
+                Hours::all(),
+                DaysOfMonth::all(),
+                Months::all(),
+                DaysOfWeek::all(),
+                Years::all()
+            ))
+    )
+);
+
+
+named!(
+    pub shorthand_secondly<Input, Schedule>,
+    do_parse!(
+        tag!("@secondly")
+            >> (Schedule::from(
+                Seconds::all(),
+                Minutes::all(),
+                Hours::all(),
+                DaysOfMonth::all(),
+                Months::all(),
+                DaysOfWeek::all(),
+                Years::all()
+            ))
+    )
+);
+
 named!(
     shorthand<Input, Schedule>,
     alt!(
@@ -605,6 +656,8 @@ named!(
             | shorthand_weekly
             | shorthand_daily
             | shorthand_hourly
+            | shorthand_minutely
+            | shorthand_secondly
     )
 );
 
