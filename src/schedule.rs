@@ -162,16 +162,16 @@ impl Schedule {
         years: Years,
     ) -> Schedule {
         Schedule {
-            years: years,
-            days_of_week: days_of_week,
-            months: months,
-            days_of_month: days_of_month,
-            hours: hours,
-            minutes: minutes,
-            seconds: seconds,
+            years,
+            days_of_week,
+            months,
+            days_of_month,
+            hours,
+            minutes,
+            seconds,
         }
     }
-
+    #[allow(clippy::never_loop)]
     fn next_after<Z>(&self, after: &DateTime<Z>) -> Option<DateTime<Z>>
     where
         Z: TimeZone,
@@ -224,6 +224,7 @@ impl Schedule {
                             let second_range =
                                 (Included(second_start), Included(Seconds::inclusive_max()));
 
+                            //FIXME: Should optimize this.
                             for second in self.seconds.ordinals().range(second_range).cloned() {
                                 let timezone = after.timezone();
                                 let candidate = timezone
@@ -275,11 +276,11 @@ impl Schedule {
     where
         Z: TimeZone,
     {
-        self.to_schedule_iterator(&timezone.from_utc_datetime(&Utc::now().naive_utc()))
+        self.into_schedule_iterator(&timezone.from_utc_datetime(&Utc::now().naive_utc()))
     }
 
     /// Like the `upcoming` method, but allows you to specify a start time other than the present.
-    pub fn to_schedule_iterator<Z>(self, after: &DateTime<Z>) -> ScheduleIteratorOwned<Z>
+    pub fn into_schedule_iterator<Z>(self, after: &DateTime<Z>) -> ScheduleIteratorOwned<Z>
     where
         Z: TimeZone,
     {
@@ -357,7 +358,7 @@ where
     fn new(schedule: &'a Schedule, starting_datetime: &DateTime<Z>) -> ScheduleIterator<'a, Z> {
         ScheduleIterator {
             is_done: false,
-            schedule: schedule,
+            schedule,
             previous_datetime: starting_datetime.clone(),
         }
     }
@@ -400,7 +401,7 @@ where
     fn new(schedule: Schedule, starting_datetime: &DateTime<Z>) -> ScheduleIteratorOwned<Z> {
         ScheduleIteratorOwned {
             is_done: false,
-            schedule: schedule,
+            schedule,
             previous_datetime: starting_datetime.clone(),
         }
     }
@@ -614,7 +615,6 @@ named!(
     )
 );
 
-
 named!(
     pub shorthand_minutely<Input, Schedule>,
     do_parse!(
@@ -630,7 +630,6 @@ named!(
             ))
     )
 );
-
 
 named!(
     pub shorthand_secondly<Input, Schedule>,

@@ -5,9 +5,9 @@
 //! # Example
 //! ```
 //! extern crate chrono;
-//! extern crate cron;
+//! extern crate cron_clock;
 //!
-//! use cron::Schedule;
+//! use cron_clock::Schedule;
 //! use chrono::Utc;
 //! use std::str::FromStr;
 //!
@@ -38,15 +38,14 @@
 
 extern crate chrono;
 extern crate nom;
-
+//TODO: Add cron expression to doc.
 #[macro_use]
 extern crate error_chain;
 
-pub mod error;
-pub mod schedule;
-pub mod time_unit;
-pub use chrono::*;
-pub use error_chain::*;
-pub use nom::*;
+pub(crate) mod error;
+pub(crate) mod schedule;
+pub(crate) mod time_unit;
 
+pub use chrono::Utc;
+pub use schedule::{Schedule, ScheduleIterator, ScheduleIteratorOwned};
 pub use time_unit::TimeUnitSpec;

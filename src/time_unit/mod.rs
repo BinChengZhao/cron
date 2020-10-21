@@ -28,7 +28,7 @@ pub struct OrdinalIter<'a> {
 impl<'a> Iterator for OrdinalIter<'a> {
     type Item = Ordinal;
     fn next(&mut self) -> Option<Ordinal> {
-        self.set_iter.next().map(|ordinal| ordinal.clone()) // No real expense; Ordinal is u32: Copy
+        self.set_iter.next().copied() // No real expense; Ordinal is u32: Copy
     }
 }
 
@@ -39,14 +39,14 @@ pub struct OrdinalRangeIter<'a> {
 impl<'a> Iterator for OrdinalRangeIter<'a> {
     type Item = Ordinal;
     fn next(&mut self) -> Option<Ordinal> {
-        self.range_iter.next().map(|ordinal| ordinal.clone()) // No real expense; Ordinal is u32: Copy
+        self.range_iter.next().copied() // No real expense; Ordinal is u32: Copy
     }
 }
 
 /// Methods exposing a schedule's configured ordinals for each individual unit of time.
 /// # Example
 /// ```
-/// use cron::{Schedule,TimeUnitSpec};
+/// use cron_clock::{Schedule,TimeUnitSpec};
 /// use std::collections::Bound::{Included,Excluded};
 /// use std::str::FromStr;
 ///
@@ -80,7 +80,7 @@ pub trait TimeUnitSpec {
     /// being described.
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cron_clock::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * * * * 2015-2044";
@@ -96,7 +96,7 @@ pub trait TimeUnitSpec {
     /// lowest to highest.
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cron_clock::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * * 5-8 * *";
@@ -110,12 +110,12 @@ pub trait TimeUnitSpec {
     /// assert_eq!(Some(8), summer.next());
     /// assert_eq!(None, summer.next());
     /// ```
-    fn iter<'a>(&'a self) -> OrdinalIter<'a>;
+    fn iter(&self) -> OrdinalIter;
 
     /// Provides an iterator which will return each included ordinal within the specified range.
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cron_clock::{Schedule,TimeUnitSpec};
     /// use std::collections::Bound::{Included,Excluded};
     /// use std::str::FromStr;
     ///
@@ -127,14 +127,14 @@ pub trait TimeUnitSpec {
     /// assert_eq!(Some(15), mid_month_paydays.next());
     /// assert_eq!(None, mid_month_paydays.next());
     /// ```
-    fn range<'a, R>(&'a self, range: R) -> OrdinalRangeIter<'a>
+    fn range<R>(&self, range: R) -> OrdinalRangeIter
     where
         R: RangeBounds<Ordinal>;
 
     /// Returns the number of ordinals included in the associated schedule
     /// # Example
     /// ```
-    /// use cron::{Schedule,TimeUnitSpec};
+    /// use cron_clock::{Schedule,TimeUnitSpec};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";
@@ -152,12 +152,12 @@ where
     fn includes(&self, ordinal: Ordinal) -> bool {
         self.ordinals().contains(&ordinal)
     }
-    fn iter<'a>(&'a self) -> OrdinalIter<'a> {
+    fn iter(&self) -> OrdinalIter {
         OrdinalIter {
             set_iter: TimeUnitField::ordinals(self).iter(),
         }
     }
-    fn range<'a, R>(&'a self, range: R) -> OrdinalRangeIter<'a>
+    fn range<R>(&self, range: R) -> OrdinalRangeIter
     where
         R: RangeBounds<Ordinal>,
     {
