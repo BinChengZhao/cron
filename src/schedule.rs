@@ -4,13 +4,15 @@ use error::{Error, ErrorKind};
 use nom::{types::CompleteStr as Input, *};
 use std::collections::BTreeSet;
 use std::collections::Bound::{Included, Unbounded};
+use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::iter::{self, Iterator};
 use std::str::{self, FromStr};
 
 use time_unit::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Schedule {
+    source: Option<String>,
     years: Years,
     days_of_week: DaysOfWeek,
     months: Months,
@@ -162,6 +164,7 @@ impl Schedule {
         years: Years,
     ) -> Schedule {
         Schedule {
+            source: None,
             years,
             days_of_week,
             months,
@@ -227,9 +230,14 @@ impl Schedule {
                             //FIXME: Should optimize this.
                             for second in self.seconds.ordinals().range(second_range).cloned() {
                                 let timezone = after.timezone();
-                                let candidate = timezone
+                                let candidate = if let Some(candidate) = timezone
                                     .ymd(year as i32, month, day_of_month)
-                                    .and_hms(hour, minute, second);
+                                    .and_hms_opt(hour, minute, second)
+                                {
+                                    candidate
+                                } else {
+                                    continue;
+                                };
                                 if !self
                                     .days_of_week
                                     .ordinals()
@@ -334,9 +342,24 @@ impl FromStr for Schedule {
     type Err = Error;
     fn from_str(expression: &str) -> Result<Self, Self::Err> {
         match schedule(Input(expression)) {
-            Ok((_, schedule)) => Ok(schedule), // Extract from nom tuple
+            Ok((_, mut schedule)) => {
+                schedule.source.replace(expression.to_owned());
+                Ok(schedule)
+            }, // Extract from nom tuple
             Err(_) => bail!(ErrorKind::Expression("Invalid cron expression.".to_owned())), //TODO: Details
         }
+    }
+}
+
+impl From<Schedule> for String {
+    fn from(schedule: Schedule) -> String {
+        schedule.source.unwrap()
+    }
+}
+
+impl Display for Schedule {
+    fn fmt(&self, f: &mut Formatter) -> FmtResult {
+        self.source.as_ref().map(|s| write!(f, "{}", s)).unwrap()
     }
 }
 
@@ -732,6 +755,24 @@ fn test_upcoming_local() {
 }
 
 #[test]
+fn test_schedule_to_string() {
+    let expression = "* 1,2,3 * * * *";
+    let schedule: Schedule = Schedule::from_str(expression).unwrap();
+    let result = String::from(schedule);
+    assert_eq!(expression, result);
+}
+
+#[test]
+fn test_display_schedule() {
+    use std::fmt::Write;
+    let expression = "@monthly";
+    let schedule = Schedule::from_str(expression).unwrap();
+    let mut result = String::new();
+    write!(result, "{}", schedule).unwrap();
+    assert_eq!(expression, result);
+}
+
+#[test]
 fn test_valid_from_str() {
     let schedule = Schedule::from_str("0 0,30 0,6,12,18 1,15 Jan-March Thurs");
     schedule.unwrap();
@@ -885,4 +926,20 @@ fn test_nom_valid_days_of_week_range() {
 fn test_nom_invalid_days_of_week_range() {
     let expression = "* * * * * BEAR-OWL";
     assert!(schedule(Input(expression)).is_err());
+}
+
+#[test]
+fn test_no_panic_on_nonexistent_time() {
+    use chrono::offset::TimeZone;
+    use chrono_tz::Tz;
+
+    let schedule_tz: Tz = "Europe/London".parse().unwrap();
+    let dt = schedule_tz
+        .ymd(2019, 10, 27)
+        .and_hms(0, 3, 29)
+        .checked_add_signed(chrono::Duration::hours(1)) // puts it in the middle of the DST transition
+        .unwrap();
+    let schedule = Schedule::from_str("* * * * * Sat,Sun *").unwrap();
+    let next = schedule.after(&dt).next().unwrap();
+    assert!(next > dt); // test is ensuring line above does not panic
 }
