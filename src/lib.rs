@@ -41,10 +41,13 @@ extern crate nom;
 //TODO: Add cron expression to doc.
 #[macro_use]
 extern crate error_chain;
+#[cfg(test)]
+extern crate chrono_tz;
 
 pub(crate) mod error;
 pub(crate) mod schedule;
 pub(crate) mod time_unit;
+
 
 pub use chrono::Utc;
 pub use schedule::{Schedule, ScheduleIterator, ScheduleIteratorOwned};
