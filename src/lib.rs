@@ -1,7 +1,11 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
 
-//! A cron expression parser and schedule explorer
+//! A cron expression parser and schedule explorer.
+//!
+//! In addition to the regular expressions, you can also use the following shortcut expressions with Schedule::from_str,
+//! such as `@yearly` `@monthly` `@weekly` `@daily` `@hourly` `@minutely` `@secondly`,
+//! make cron- Expression Iterator.
 //! # Example
 //! ```
 //! extern crate chrono;
@@ -35,10 +39,8 @@
 //! -> 2018-08-15 09:30:00 UTC
 //! */
 //! ```
-
 extern crate chrono;
 extern crate nom;
-//TODO: Add cron expression to doc.
 #[macro_use]
 extern crate error_chain;
 #[cfg(test)]
@@ -47,7 +49,6 @@ extern crate chrono_tz;
 pub(crate) mod error;
 pub(crate) mod schedule;
 pub(crate) mod time_unit;
-
 
 pub use chrono::Utc;
 pub use schedule::{Schedule, ScheduleIterator, ScheduleIteratorOwned};

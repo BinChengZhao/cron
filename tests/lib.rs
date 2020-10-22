@@ -1,12 +1,22 @@
 extern crate chrono;
 extern crate cron_clock;
+extern crate timed;
+#[warn(unused_imports)]
+#[macro_use]
+extern crate log;
 
 #[cfg(test)]
 mod tests {
     use chrono::*;
-    use cron_clock::{Schedule, ScheduleIterator, ScheduleIteratorOwned, TimeUnitSpec};
+    use cron_clock::{Schedule, TimeUnitSpec};
     use std::collections::Bound::{Excluded, Included};
     use std::str::FromStr;
+
+    #[warn(unused_imports)]
+    use timed::timed;
+    // For simple analysis or profile of execution time use `timed`,
+    // but make sure that the API removes this attribute at release time,
+    // as it will produce output at runtime.
 
     #[test]
     fn test_readme() {
@@ -184,27 +194,24 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_minutely() {
         let expression = "@minutely";
         let schedule = Schedule::from_str(expression).expect("Failed to parse @minutely.");
         let starting_date = Utc.ymd(2017, 2, 25).and_hms(23, 59, 36);
         let mut events = schedule.after(&starting_date);
 
-        // for date in events.take(10) {
-        //     println!("{}", date);
-        // }
-        //TODO:NOT SUCCESS, SHOULD FIXME:.
+        events.next().unwrap();
+
         assert_eq!(
-            Utc.ymd(2017, 2, 26).and_hms(00, 00, 36),
+            Utc.ymd(2017, 2, 26).and_hms(00, 01, 00),
             events.next().unwrap()
         );
         assert_eq!(
-            Utc.ymd(2017, 2, 26).and_hms(0, 1, 36),
+            Utc.ymd(2017, 2, 26).and_hms(0, 02, 00),
             events.next().unwrap()
         );
         assert_eq!(
-            Utc.ymd(2017, 2, 26).and_hms(0, 2, 36),
+            Utc.ymd(2017, 2, 26).and_hms(0, 03, 00),
             events.next().unwrap()
         );
     }

@@ -174,7 +174,6 @@ impl Schedule {
             seconds,
         }
     }
-    #[allow(clippy::never_loop)]
     fn next_after<Z>(&self, after: &DateTime<Z>) -> Option<DateTime<Z>>
     where
         Z: TimeZone,
@@ -227,7 +226,6 @@ impl Schedule {
                             let second_range =
                                 (Included(second_start), Included(Seconds::inclusive_max()));
 
-                            //FIXME: Should optimize this.
                             for second in self.seconds.ordinals().range(second_range).cloned() {
                                 let timezone = after.timezone();
                                 let candidate = if let Some(candidate) = timezone
@@ -284,11 +282,11 @@ impl Schedule {
     where
         Z: TimeZone,
     {
-        self.into_schedule_iterator(&timezone.from_utc_datetime(&Utc::now().naive_utc()))
+        self.into_schedule_iterator(timezone.from_utc_datetime(&Utc::now().naive_utc()))
     }
 
     /// Like the `upcoming` method, but allows you to specify a start time other than the present.
-    pub fn into_schedule_iterator<Z>(self, after: &DateTime<Z>) -> ScheduleIteratorOwned<Z>
+    pub fn into_schedule_iterator<Z>(self, after: DateTime<Z>) -> ScheduleIteratorOwned<Z>
     where
         Z: TimeZone,
     {
@@ -345,7 +343,7 @@ impl FromStr for Schedule {
             Ok((_, mut schedule)) => {
                 schedule.source.replace(expression.to_owned());
                 Ok(schedule)
-            }, // Extract from nom tuple
+            } // Extract from nom tuple
             Err(_) => bail!(ErrorKind::Expression("Invalid cron expression.".to_owned())), //TODO: Details
         }
     }
@@ -421,11 +419,11 @@ impl<Z> ScheduleIteratorOwned<Z>
 where
     Z: TimeZone,
 {
-    fn new(schedule: Schedule, starting_datetime: &DateTime<Z>) -> ScheduleIteratorOwned<Z> {
+    fn new(schedule: Schedule, starting_datetime: DateTime<Z>) -> ScheduleIteratorOwned<Z> {
         ScheduleIteratorOwned {
             is_done: false,
             schedule,
-            previous_datetime: starting_datetime.clone(),
+            previous_datetime: starting_datetime,
         }
     }
 }
