@@ -360,7 +360,7 @@ impl Display for Schedule {
         self.source.as_ref().map(|s| write!(f, "{}", s)).unwrap()
     }
 }
-
+#[derive(Debug, Clone)]
 pub struct ScheduleIterator<'a, Z>
 where
     Z: TimeZone,
@@ -405,7 +405,7 @@ where
     }
 }
 
-//TODO: NEW Owned Version.
+#[derive(Debug, Clone)]
 pub struct ScheduleIteratorOwned<Z>
 where
     Z: TimeZone,
