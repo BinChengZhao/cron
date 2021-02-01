@@ -10,7 +10,7 @@ use std::str::{self, FromStr};
 
 use time_unit::*;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Schedule {
     source: Option<String>,
     years: Years,
@@ -22,6 +22,7 @@ pub struct Schedule {
     seconds: Seconds,
 }
 
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 struct NextAfterQuery<Z>
 where
     Z: TimeZone,
@@ -360,7 +361,7 @@ impl Display for Schedule {
         self.source.as_ref().map(|s| write!(f, "{}", s)).unwrap()
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScheduleIterator<'a, Z>
 where
     Z: TimeZone,
@@ -405,7 +406,7 @@ where
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScheduleIteratorOwned<Z>
 where
     Z: TimeZone,
@@ -455,7 +456,7 @@ pub type Ordinal = u32;
 // queries
 pub type OrdinalSet = BTreeSet<Ordinal>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Specifier {
     All,
     Point(Ordinal),
@@ -465,7 +466,7 @@ pub enum Specifier {
     NamedRange(String, String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Field {
     pub specifiers: Vec<Specifier>, // TODO: expose iterator?
 }

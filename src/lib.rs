@@ -50,6 +50,7 @@ pub(crate) mod error;
 pub(crate) mod schedule;
 pub(crate) mod time_unit;
 
-pub use chrono::Utc;
+pub use chrono::offset::TimeZone;
+pub use chrono::{FixedOffset, Local, Utc};
 pub use schedule::{Schedule, ScheduleIterator, ScheduleIteratorOwned};
 pub use time_unit::TimeUnitSpec;

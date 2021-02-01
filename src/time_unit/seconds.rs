@@ -2,7 +2,7 @@ use schedule::{Ordinal, OrdinalSet};
 use std::borrow::Cow;
 use time_unit::TimeUnitField;
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Seconds(OrdinalSet);
 
 impl TimeUnitField for Seconds {
