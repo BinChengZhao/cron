@@ -1,4 +1,4 @@
-# cron_clock[![](http://meritbadge.herokuapp.com/cron)](https://crates.io/crates/cron_clock) [![](https://docs.rs/cron_clock/badge.svg)](https://docs.rs/cron_clock)
+# cron_clock[![](http://meritbadge.herokuapp.com/cron_clock)](https://crates.io/crates/cron_clock) [![](https://docs.rs/cron_clock/badge.svg)](https://docs.rs/cron_clock)
 
 
 A cron expression parser. Works with stable Rust v1.28.0.
