@@ -47,7 +47,7 @@ impl<'a> Iterator for OrdinalRangeIter<'a> {
 /// # Example
 /// ```
 /// use cron_clock::{Schedule,TimeUnitSpec};
-/// use std::collections::Bound::{Included,Excluded};
+/// use std::ops::Bound::{Included,Excluded};
 /// use std::str::FromStr;
 ///
 /// let expression = "* * * * * * 2015-2044";
@@ -116,7 +116,7 @@ pub trait TimeUnitSpec {
     /// # Example
     /// ```
     /// use cron_clock::{Schedule,TimeUnitSpec};
-    /// use std::collections::Bound::{Included,Excluded};
+    /// use std::ops::Bound::{Included,Excluded};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";

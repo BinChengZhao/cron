@@ -9,7 +9,7 @@ extern crate log;
 mod tests {
     use chrono::*;
     use cron_clock::{Schedule, TimeUnitSpec};
-    use std::collections::Bound::{Excluded, Included};
+    use std::ops::Bound::{Excluded, Included};
     use std::str::FromStr;
 
     #[warn(unused_imports)]
