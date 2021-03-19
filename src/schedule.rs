@@ -3,7 +3,7 @@ use chrono::{DateTime, Datelike, Duration, Timelike, Utc};
 use error::{Error, ErrorKind};
 use nom::{types::CompleteStr as Input, *};
 use std::collections::BTreeSet;
-use std::collections::Bound::{Included, Unbounded};
+use std::ops::Bound::{Included, Unbounded};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::iter::{self, Iterator};
 use std::str::{self, FromStr};
