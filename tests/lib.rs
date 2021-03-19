@@ -1,7 +1,7 @@
 extern crate chrono;
 extern crate cron_clock;
 extern crate timed;
-#[warn(unused_imports)]
+#[allow(unused_imports)]
 #[macro_use]
 extern crate log;
 
@@ -12,7 +12,7 @@ mod tests {
     use std::collections::Bound::{Excluded, Included};
     use std::str::FromStr;
 
-    #[warn(unused_imports)]
+    #[allow(unused_imports)]
     use timed::timed;
     // For simple analysis or profile of execution time use `timed`,
     // but make sure that the API removes this attribute at release time,

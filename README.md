@@ -4,6 +4,12 @@
 A cron expression parser. Works with stable Rust v1.28.0.
 The project is based on `zslayton/cron`, thank him very much.
 
+In addition to the regular expressions, you can also use the following shortcut expressions with Schedule::from_str, such as `@yearly` `@monthly` `@weekly` `@daily` `@hourly` `@minutely` `@secondly`, make cron- Expression Iterator.
+
+## Tips  
+If you need a periodicized task manager, you may need [`delay-timer`](https://github.com/BinChengZhao/delay-timer) (Time-manager of delayed tasks. Like crontab, but synchronous `asynchronous` tasks are possible, and dynamic add/cancel/remove is supported) .
+
+### Example
 ```rust
 extern crate cron;
 extern crate chrono;
@@ -35,4 +41,26 @@ Upcoming fire times:
 -> 2018-08-01 15:30:00 UTC
 -> 2018-08-15 09:30:00 UTC
 */
+```
+
+### Example `shortcut expressions` & `ScheduleIteratorOwned`
+``` rust
+ extern crate chrono;
+ extern crate cron_clock;
+
+ use cron_clock::Schedule;
+ use chrono::Utc;
+ use std::str::FromStr;
+
+ fn main() {
+   // shortcut expressions
+   let expression = "@hourly";
+   let schedule = Schedule::from_str(expression).unwrap();
+   println!("Upcoming fire times:");
+   // `upcoming_owned` Get iterators with ownership, so you don't have lifetime to worry about.
+   for datetime in schedule.upcoming_owned(Utc).take(10) {
+     println!("-> {}", datetime);
+   }
+ }
+
 ```

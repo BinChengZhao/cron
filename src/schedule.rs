@@ -10,6 +10,7 @@ use std::str::{self, FromStr};
 
 use time_unit::*;
 
+/// Metadata for cron-expression parsing.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Schedule {
     source: Option<String>,
@@ -361,6 +362,7 @@ impl Display for Schedule {
         self.source.as_ref().map(|s| write!(f, "{}", s)).unwrap()
     }
 }
+/// Schedule-DateTime iterator for cron-expressions.
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScheduleIterator<'a, Z>
 where
@@ -406,6 +408,7 @@ where
     }
 }
 
+/// Schedule-DateTime iterator for cron-expressions(Ownership data, which does not have a lifetime, can be used anywhere).
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScheduleIteratorOwned<Z>
 where
