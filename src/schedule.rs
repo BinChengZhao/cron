@@ -3,9 +3,9 @@ use chrono::{DateTime, Datelike, Duration, Timelike, Utc};
 use error::{Error, ErrorKind};
 use nom::{types::CompleteStr as Input, *};
 use std::collections::BTreeSet;
-use std::ops::Bound::{Included, Unbounded};
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::iter::{self, Iterator};
+use std::ops::Bound::{Included, Unbounded};
 use std::str::{self, FromStr};
 
 use time_unit::*;
@@ -409,6 +409,7 @@ where
 }
 
 /// Schedule-DateTime iterator for cron-expressions(Ownership data, which does not have a lifetime, can be used anywhere).
+
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct ScheduleIteratorOwned<Z>
 where
@@ -429,6 +430,11 @@ where
             schedule,
             previous_datetime: starting_datetime,
         }
+    }
+
+    /// Refreshes the reference time inside `ScheduleIteratorOwned`.
+    pub fn refresh_previous_datetime(&mut self, timezone: Z) {
+        self.previous_datetime = timezone.from_utc_datetime(&Utc::now().naive_utc());
     }
 }
 

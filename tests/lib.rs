@@ -388,4 +388,32 @@ mod tests {
         let next_time_2 = schedule_2.after(&start_time).next().unwrap();
         assert_eq!(next_time_1, next_time_2);
     }
+
+    #[test]
+    fn test_refresh_previous_datetime() {
+        use std::thread::sleep;
+        use std::time::Duration;
+
+        let expression = "0/2 * * * * *";
+        let schedule = Schedule::from_str(expression).unwrap();
+        let mut schedule_iterator = schedule.upcoming_owned(Utc);
+        let mut schedule_iterator_mirror = schedule_iterator.clone();
+
+        debug_assert_eq!(schedule_iterator, schedule_iterator_mirror);
+
+        let schedule_iterator_first_time = schedule_iterator.next();
+        debug_assert_ne!(schedule_iterator, schedule_iterator_mirror);
+
+        sleep(Duration::from_secs(3));
+
+        schedule_iterator_mirror.refresh_previous_datetime(Utc);
+        debug_assert_ne!(schedule_iterator, schedule_iterator_mirror);
+
+        let schedule_iterator_mirror_first_time = schedule_iterator_mirror.next();
+
+        debug_assert_ne!(
+            schedule_iterator_first_time,
+            schedule_iterator_mirror_first_time
+        );
+    }
 }
