@@ -433,6 +433,7 @@ where
     }
 
     /// Refreshes the reference time inside `ScheduleIteratorOwned`.
+    #[inline(always)]
     pub fn refresh_previous_datetime(&mut self, timezone: Z) {
         self.previous_datetime = timezone.from_utc_datetime(&Utc::now().naive_utc());
     }
