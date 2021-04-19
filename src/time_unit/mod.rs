@@ -14,8 +14,9 @@ pub use self::months::Months;
 pub use self::seconds::Seconds;
 pub use self::years::Years;
 
-use error::*;
-use schedule::{Ordinal, OrdinalSet, Specifier};
+use crate::error::*;
+use crate::ordinal::{Ordinal, OrdinalSet};
+use crate::specifier::{RootSpecifier, Specifier};
 use std::borrow::Cow;
 use std::collections::btree_set;
 use std::iter;
@@ -28,7 +29,13 @@ pub struct OrdinalIter<'a> {
 impl<'a> Iterator for OrdinalIter<'a> {
     type Item = Ordinal;
     fn next(&mut self) -> Option<Ordinal> {
-        self.set_iter.next().copied() // No real expense; Ordinal is u32: Copy
+        self.set_iter.next().copied()
+    }
+}
+
+impl<'a> DoubleEndedIterator for OrdinalIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.set_iter.next_back().copied()
     }
 }
 
@@ -39,7 +46,13 @@ pub struct OrdinalRangeIter<'a> {
 impl<'a> Iterator for OrdinalRangeIter<'a> {
     type Item = Ordinal;
     fn next(&mut self) -> Option<Ordinal> {
-        self.range_iter.next().copied() // No real expense; Ordinal is u32: Copy
+        self.range_iter.next().copied()
+    }
+}
+
+impl<'a> DoubleEndedIterator for OrdinalRangeIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.range_iter.next_back().copied()
     }
 }
 
@@ -47,7 +60,7 @@ impl<'a> Iterator for OrdinalRangeIter<'a> {
 /// # Example
 /// ```
 /// use cron_clock::{Schedule,TimeUnitSpec};
-/// use std::collections::Bound::{Included,Excluded};
+/// use std::ops::Bound::{Included,Excluded};
 /// use std::str::FromStr;
 ///
 /// let expression = "* * * * * * 2015-2044";
@@ -116,7 +129,7 @@ pub trait TimeUnitSpec {
     /// # Example
     /// ```
     /// use cron_clock::{Schedule,TimeUnitSpec};
-    /// use std::collections::Bound::{Included,Excluded};
+    /// use std::ops::Bound::{Included,Excluded};
     /// use std::str::FromStr;
     ///
     /// let expression = "* * * 1,15 * * *";
@@ -143,6 +156,20 @@ pub trait TimeUnitSpec {
     /// assert_eq!(2, schedule.days_of_month().count());
     /// ```
     fn count(&self) -> u32;
+
+    /// Checks if this TimeUnitSpec is defined as all possibilities (thus created with a '*', '?' or in the case of weekdays '1-7')
+    /// # Example
+    /// ```
+    /// use cron_clock::{Schedule,TimeUnitSpec};
+    /// use std::str::FromStr;
+    ///
+    /// let expression = "* * * 1,15 * * *";
+    /// let schedule = Schedule::from_str(expression).expect("Failed to parse expression.");
+    ///
+    /// assert_eq!(false, schedule.days_of_month().is_all());
+    /// assert_eq!(true, schedule.months().is_all());
+    /// ```
+    fn is_all(&self) -> bool;
 }
 
 impl<T> TimeUnitSpec for T
@@ -157,7 +184,7 @@ where
             set_iter: TimeUnitField::ordinals(self).iter(),
         }
     }
-    fn range<R>(&self, range: R) -> OrdinalRangeIter
+    fn range<R>(&'_ self, range: R) -> OrdinalRangeIter<'_>
     where
         R: RangeBounds<Ordinal>,
     {
@@ -168,79 +195,86 @@ where
     fn count(&self) -> u32 {
         self.ordinals().len() as u32
     }
+
+    fn is_all(&self) -> bool {
+        let max_supported_ordinals = Self::inclusive_max() - Self::inclusive_min() + 1;
+        self.ordinals().len() == max_supported_ordinals as usize
+    }
 }
 
 pub trait TimeUnitField
 where
     Self: Sized,
 {
-    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self;
+    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self;
     fn name() -> Cow<'static, str>;
     fn inclusive_min() -> Ordinal;
     fn inclusive_max() -> Ordinal;
     fn ordinals(&self) -> &OrdinalSet;
+
     fn from_ordinal(ordinal: Ordinal) -> Self {
         Self::from_ordinal_set(iter::once(ordinal).collect())
     }
+
     fn supported_ordinals() -> OrdinalSet {
         (Self::inclusive_min()..Self::inclusive_max() + 1).collect()
     }
+
     fn all() -> Self {
-        Self::from_ordinal_set(Self::supported_ordinals())
+        Self::from_optional_ordinal_set(None)
     }
-    fn ordinal_from_name(name: &str) -> Result<Ordinal> {
-        bail!(ErrorKind::Expression(format!(
+
+    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
+        Self::from_optional_ordinal_set(Some(ordinal_set))
+    }
+
+    fn ordinal_from_name(name: &str) -> Result<Ordinal, Error> {
+        Err(ErrorKind::Expression(format!(
             "The '{}' field does not support using names. '{}' \
              specified.",
             Self::name(),
             name
-        )))
+        ))
+        .into())
     }
-    fn validate_ordinal(ordinal: Ordinal) -> Result<Ordinal> {
+    fn validate_ordinal(ordinal: Ordinal) -> Result<Ordinal, Error> {
         //println!("validate_ordinal for {} => {}", Self::name(), ordinal);
         match ordinal {
-            i if i < Self::inclusive_min() => bail!(ErrorKind::Expression(format!(
+            i if i < Self::inclusive_min() => Err(ErrorKind::Expression(format!(
                 "{} must be greater than or equal to {}. ('{}' \
                  specified.)",
                 Self::name(),
                 Self::inclusive_min(),
                 i
-            ))),
-            i if i > Self::inclusive_max() => bail!(ErrorKind::Expression(format!(
+            ))
+            .into()),
+            i if i > Self::inclusive_max() => Err(ErrorKind::Expression(format!(
                 "{} must be less than {}. ('{}' specified.)",
                 Self::name(),
                 Self::inclusive_max(),
                 i
-            ))),
+            ))
+            .into()),
             i => Ok(i),
         }
     }
 
-    fn ordinals_from_specifier(specifier: &Specifier) -> Result<OrdinalSet> {
+    fn ordinals_from_specifier(specifier: &Specifier) -> Result<OrdinalSet, Error> {
         use self::Specifier::*;
         //println!("ordinals_from_specifier for {} => {:?}", Self::name(), specifier);
         match *specifier {
             All => Ok(Self::supported_ordinals()),
             Point(ordinal) => Ok((&[ordinal]).iter().cloned().collect()),
-            NamedPoint(ref name) => Ok((&[Self::ordinal_from_name(name)?])
-                .iter()
-                .cloned()
-                .collect()),
-            Period(start, step) => {
-                let start = Self::validate_ordinal(start)?;
-                Ok((start..Self::inclusive_max() + 1)
-                    .step_by(step as usize)
-                    .collect())
-            }
             Range(start, end) => {
                 match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
                     (Ok(start), Ok(end)) if start <= end => Ok((start..end + 1).collect()),
-                    _ => bail!(ErrorKind::Expression(format!(
+                    _ => Err(ErrorKind::Expression(format!(
                         "Invalid range for {}: {}-{}",
                         Self::name(),
                         start,
                         end
-                    ))),
+                    ))
+                    .into()),
                 }
             }
             NamedRange(ref start_name, ref end_name) => {
@@ -248,14 +282,38 @@ where
                 let end = Self::ordinal_from_name(end_name)?;
                 match (Self::validate_ordinal(start), Self::validate_ordinal(end)) {
                     (Ok(start), Ok(end)) if start <= end => Ok((start..end + 1).collect()),
-                    _ => bail!(ErrorKind::Expression(format!(
+                    _ => Err(ErrorKind::Expression(format!(
                         "Invalid named range for {}: {}-{}",
                         Self::name(),
                         start_name,
                         end_name
-                    ))),
+                    ))
+                    .into()),
                 }
             }
         }
+    }
+
+    fn ordinals_from_root_specifier(root_specifier: &RootSpecifier) -> Result<OrdinalSet, Error> {
+        let ordinals = match root_specifier {
+            RootSpecifier::Specifier(specifier) => Self::ordinals_from_specifier(&specifier)?,
+            RootSpecifier::Period(start, step) => {
+                let base_set = match start {
+                    // A point prior to a period implies a range whose start is the specified
+                    // point and terminating inclusively with the inclusive max
+                    Specifier::Point(start) => {
+                        let start = Self::validate_ordinal(*start)?;
+                        (start..=Self::inclusive_max()).collect()
+                    }
+                    specifier => Self::ordinals_from_specifier(&specifier)?,
+                };
+                base_set.into_iter().step_by(*step as usize).collect()
+            }
+            RootSpecifier::NamedPoint(ref name) => (&[Self::ordinal_from_name(name)?])
+                .iter()
+                .cloned()
+                .collect::<OrdinalSet>(),
+        };
+        Ok(ordinals)
     }
 }

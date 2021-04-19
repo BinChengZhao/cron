@@ -1,13 +1,20 @@
-use schedule::{Ordinal, OrdinalSet};
+use crate::ordinal::{Ordinal, OrdinalSet};
+use crate::time_unit::TimeUnitField;
+use once_cell::sync::Lazy;
 use std::borrow::Cow;
-use time_unit::TimeUnitField;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Years(OrdinalSet);
+static ALL: Lazy<OrdinalSet> = Lazy::new(Years::supported_ordinals);
+
+#[derive(Debug, Clone, Hash, Eq)]
+pub struct Years {
+    ordinals: Option<OrdinalSet>,
+}
 
 impl TimeUnitField for Years {
-    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
-        Years(ordinal_set)
+    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self {
+        Years {
+            ordinals: ordinal_set,
+        }
     }
     fn name() -> Cow<'static, str> {
         Cow::from("Years")
@@ -22,6 +29,15 @@ impl TimeUnitField for Years {
         2100
     }
     fn ordinals(&self) -> &OrdinalSet {
-        &self.0
+        match &self.ordinals {
+            Some(ordinal_set) => &ordinal_set,
+            None => &ALL,
+        }
+    }
+}
+
+impl PartialEq for Years {
+    fn eq(&self, other: &Years) -> bool {
+        self.ordinals() == other.ordinals()
     }
 }

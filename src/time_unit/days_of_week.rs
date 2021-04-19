@@ -1,14 +1,21 @@
-use error::*;
-use schedule::{Ordinal, OrdinalSet};
+use crate::error::*;
+use crate::ordinal::{Ordinal, OrdinalSet};
+use crate::time_unit::TimeUnitField;
+use once_cell::sync::Lazy;
 use std::borrow::Cow;
-use time_unit::TimeUnitField;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct DaysOfWeek(OrdinalSet);
+static ALL: Lazy<OrdinalSet> = Lazy::new(DaysOfWeek::supported_ordinals);
+
+#[derive(Debug, Clone, Hash, Eq)]
+pub struct DaysOfWeek {
+    ordinals: Option<OrdinalSet>,
+}
 
 impl TimeUnitField for DaysOfWeek {
-    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
-        DaysOfWeek(ordinal_set)
+    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self {
+        DaysOfWeek {
+            ordinals: ordinal_set,
+        }
     }
     fn name() -> Cow<'static, str> {
         Cow::from("Days of Week")
@@ -19,7 +26,7 @@ impl TimeUnitField for DaysOfWeek {
     fn inclusive_max() -> Ordinal {
         7
     }
-    fn ordinal_from_name(name: &str) -> Result<Ordinal> {
+    fn ordinal_from_name(name: &str) -> Result<Ordinal, Error> {
         //TODO: Use phf crate
         let ordinal = match name.to_lowercase().as_ref() {
             "sun" | "sunday" => 1,
@@ -29,14 +36,26 @@ impl TimeUnitField for DaysOfWeek {
             "thu" | "thurs" | "thursday" => 5,
             "fri" | "friday" => 6,
             "sat" | "saturday" => 7,
-            _ => bail!(ErrorKind::Expression(format!(
-                "'{}' is not a valid day of the week.",
-                name
-            ))),
+            _ => {
+                return Err(ErrorKind::Expression(format!(
+                    "'{}' is not a valid day of the week.",
+                    name
+                ))
+                .into())
+            }
         };
         Ok(ordinal)
     }
     fn ordinals(&self) -> &OrdinalSet {
-        &self.0
+        match &self.ordinals {
+            Some(ordinal_set) => &ordinal_set,
+            None => &ALL,
+        }
+    }
+}
+
+impl PartialEq for DaysOfWeek {
+    fn eq(&self, other: &DaysOfWeek) -> bool {
+        self.ordinals() == other.ordinals()
     }
 }

@@ -1,14 +1,21 @@
-use error::*;
-use schedule::{Ordinal, OrdinalSet};
+use crate::error::*;
+use crate::ordinal::{Ordinal, OrdinalSet};
+use crate::time_unit::TimeUnitField;
+use once_cell::sync::Lazy;
 use std::borrow::Cow;
-use time_unit::TimeUnitField;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct Months(OrdinalSet);
+static ALL: Lazy<OrdinalSet> = Lazy::new(Months::supported_ordinals);
+
+#[derive(Debug, Clone, Hash, Eq)]
+pub struct Months {
+    ordinals: Option<OrdinalSet>,
+}
 
 impl TimeUnitField for Months {
-    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
-        Months(ordinal_set)
+    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self {
+        Months {
+            ordinals: ordinal_set,
+        }
     }
     fn name() -> Cow<'static, str> {
         Cow::from("Months")
@@ -19,7 +26,7 @@ impl TimeUnitField for Months {
     fn inclusive_max() -> Ordinal {
         12
     }
-    fn ordinal_from_name(name: &str) -> Result<Ordinal> {
+    fn ordinal_from_name(name: &str) -> Result<Ordinal, Error> {
         //TODO: Use phf crate
         let ordinal = match name.to_lowercase().as_ref() {
             "jan" | "january" => 1,
@@ -34,14 +41,24 @@ impl TimeUnitField for Months {
             "oct" | "october" => 10,
             "nov" | "november" => 11,
             "dec" | "december" => 12,
-            _ => bail!(ErrorKind::Expression(format!(
-                "'{}' is not a valid month name.",
-                name
-            ))),
+            _ => {
+                return Err(
+                    ErrorKind::Expression(format!("'{}' is not a valid month name.", name)).into(),
+                )
+            }
         };
         Ok(ordinal)
     }
     fn ordinals(&self) -> &OrdinalSet {
-        &self.0
+        match &self.ordinals {
+            Some(ordinal_set) => &ordinal_set,
+            None => &ALL,
+        }
+    }
+}
+
+impl PartialEq for Months {
+    fn eq(&self, other: &Months) -> bool {
+        self.ordinals() == other.ordinals()
     }
 }

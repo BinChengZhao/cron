@@ -1,5 +1,6 @@
 #![cfg_attr(feature = "clippy", feature(plugin))]
 #![cfg_attr(feature = "clippy", plugin(clippy))]
+#![allow(clippy::derive_hash_xor_eq)]
 #![allow(broken_intra_doc_links)]
 
 //! A cron expression parser and schedule explorer.
@@ -72,15 +73,19 @@
 //! ```
 
 extern crate chrono;
-extern crate nom;
-#[macro_use]
-extern crate error_chain;
 #[cfg(test)]
 extern crate chrono_tz;
+extern crate nom;
 
-pub(crate) mod error;
+pub mod error;
+
 pub(crate) mod schedule;
 pub(crate) mod time_unit;
+
+mod ordinal;
+mod parsing;
+mod queries;
+mod specifier;
 
 pub use chrono::offset::TimeZone;
 pub use chrono::{FixedOffset, Local, Utc};

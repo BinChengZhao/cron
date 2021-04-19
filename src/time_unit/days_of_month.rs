@@ -1,13 +1,20 @@
-use schedule::{Ordinal, OrdinalSet};
+use crate::ordinal::{Ordinal, OrdinalSet};
+use crate::time_unit::TimeUnitField;
+use once_cell::sync::Lazy;
 use std::borrow::Cow;
-use time_unit::TimeUnitField;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub struct DaysOfMonth(OrdinalSet);
+static ALL: Lazy<OrdinalSet> = Lazy::new(DaysOfMonth::supported_ordinals);
+
+#[derive(Debug, Clone, Hash, Eq)]
+pub struct DaysOfMonth {
+    ordinals: Option<OrdinalSet>,
+}
 
 impl TimeUnitField for DaysOfMonth {
-    fn from_ordinal_set(ordinal_set: OrdinalSet) -> Self {
-        DaysOfMonth(ordinal_set)
+    fn from_optional_ordinal_set(ordinal_set: Option<OrdinalSet>) -> Self {
+        DaysOfMonth {
+            ordinals: ordinal_set,
+        }
     }
     fn name() -> Cow<'static, str> {
         Cow::from("Days of Month")
@@ -19,6 +26,15 @@ impl TimeUnitField for DaysOfMonth {
         31
     }
     fn ordinals(&self) -> &OrdinalSet {
-        &self.0
+        match &self.ordinals {
+            Some(ordinal_set) => &ordinal_set,
+            None => &ALL,
+        }
+    }
+}
+
+impl PartialEq for DaysOfMonth {
+    fn eq(&self, other: &DaysOfMonth) -> bool {
+        self.ordinals() == other.ordinals()
     }
 }
